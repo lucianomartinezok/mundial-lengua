@@ -278,28 +278,31 @@ function renderBracket() {
 }
 
 function renderMatch(match) {
+  const locked = match.round > state.currentRoundIndex;
   const classes = ["match"];
-  if (match.userMatch && match.round === state.currentRoundIndex) classes.push("user-match");
-  if (match.userMatch && match.winner === state.selectedTeam.id) classes.push("won");
-  if (match.winner && !match.userMatch) classes.push("simulated");
-  const score = match.score || ["", ""];
+  if (locked) classes.push("locked");
+  if (!locked && match.userMatch && match.round === state.currentRoundIndex) classes.push("user-match");
+  if (!locked && match.userMatch && match.winner === state.selectedTeam.id) classes.push("won");
+  if (!locked && match.winner && !match.userMatch) classes.push("simulated");
+  const score = locked ? ["", ""] : match.score || ["", ""];
+  const teams = locked ? [null, null] : match.teams;
 
   return `
     <div class="${classes.join(" ")}">
-      ${match.teams.map((teamId, index) => renderSlot(teamId, score[index])).join("")}
-      ${match.userMatch && match.round === state.currentRoundIndex ? `
+      ${teams.map((teamId, index) => renderSlot(teamId, score[index], locked)).join("")}
+      ${!locked && match.userMatch && match.round === state.currentRoundIndex ? `
         <button class="bracket-play" type="button" id="bracket-play-button">¡JUGAR!</button>
       ` : ""}
     </div>
   `;
 }
 
-function renderSlot(teamId, score) {
+function renderSlot(teamId, score, locked = false) {
   if (!teamId) {
     return `
       <div class="slot">
-        <span>•</span>
-        <span>---</span>
+        <span>${locked ? "" : "•"}</span>
+        <span>${locked ? "Por definir" : "---"}</span>
         <span class="score-pill">-</span>
       </div>
     `;
@@ -457,13 +460,6 @@ function rememberNextOpponent() {
   if (rival && !state.usedUserOpponents.includes(rival.id)) {
     state.usedUserOpponents.push(rival.id);
   }
-}
-
-function pickFinalOpponent() {
-  const candidates = TEAMS.filter(
-    (team) => team.id !== state.selectedTeam.id && !state.usedUserOpponents.includes(team.id),
-  );
-  return shuffle(candidates.length ? candidates : TEAMS.filter((team) => team.id !== state.selectedTeam.id))[0].id;
 }
 
 function renderEliminated() {
