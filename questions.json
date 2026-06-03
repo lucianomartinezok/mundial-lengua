@@ -1,0 +1,169 @@
+[
+  {
+    "id": 1,
+    "partido": "octavos",
+    "topico": "Ortografía",
+    "text": "¿Cuál de las siguientes palabras está bien escrita?",
+    "options": ["golaso", "golasso", "golazo", "gollazo"],
+    "answer": 2
+  },
+  {
+    "id": 2,
+    "partido": "octavos",
+    "topico": "Ortografía",
+    "text": "Lee las siguientes oraciones y elegí la que no tiene errores ortográficos:",
+    "options": [
+      "Por primera ves en la historia, tres países organizan una Copa Mundial de la FIFA con 48 selecciones.",
+      "Por primera vez en la istoria, tres países organizan una Copa Mundial de la FIFA con 48 selecciones.",
+      "Por primera vez en la historia, tres paízes organizan una Copa Mundial de la FIFA con 48 selecciones.",
+      "Por primera vez en la historia, tres países organizan una Copa Mundial de la FIFA con 48 selecciones."
+    ],
+    "answer": 3
+  },
+  {
+    "id": 3,
+    "partido": "octavos",
+    "topico": "Ortografía",
+    "text": "Lee las oraciones y elegí la correcta:",
+    "options": [
+      "El director técnico conbocó a los jugadores.",
+      "El director técnico comvocó a los jugadores.",
+      "El Director Técnico convocó a los jugadores.",
+      "El director técnico convocó a los jugadores."
+    ],
+    "answer": 3
+  },
+  {
+    "id": 4,
+    "partido": "cuartos",
+    "topico": "Tildes",
+    "text": "¿En cuál opción la palabra está correctamente acentuada?",
+    "options": ["Futból", "Futbol", "Fútbol", "Futbòl"],
+    "answer": 2
+  },
+  {
+    "id": 5,
+    "partido": "cuartos",
+    "topico": "Tildes",
+    "text": "Elegí la oración que no presenta errores de tildación:",
+    "options": [
+      "La FIFA organizará el Mundial en Canadá, Estados Unidos y México.",
+      "la FIFA organizará el Mundial en Canadá, Estados Unidos y México.",
+      "La fifa organizará el mundial en Canadá, Estados Unidos y México.",
+      "La FIFA organizará el Mundial en canadá, estados unidos y méxico."
+    ],
+    "answer": 0
+  },
+  {
+    "id": 6,
+    "partido": "cuartos",
+    "topico": "Tildes",
+    "text": "El Mundial 2026 se juega en tres países. Prestá atención a las tildes y elegí la opción correcta:",
+    "options": [
+      "Estados Unídos, México y Cánada",
+      "Estados Unidos, Mexico y Canadá.",
+      "Estados Unidos, México y Canadá.",
+      "Estados Unidos, Mexico y Canáda."
+    ],
+    "answer": 2
+  },
+  {
+    "id": 7,
+    "partido": "semis",
+    "topico": "Signos de puntuación",
+    "text": "Elegí la opción escrita correctamente:",
+    "options": [
+      "¿Quién ganó el último mundial?",
+      "Quien ganó el último Mundial?",
+      "¿Quién ganó el último Mundial?",
+      "¿Quien ganó el ultimo Mundial?"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 8,
+    "partido": "semis",
+    "topico": "Signos de puntuación",
+    "text": "¿Cuál oración presenta un uso correcto de los signos de puntuación?",
+    "options": [
+      "Lionel Messi, jugará el Mundial 2026.",
+      "Lionel Messi jugará, el Mundial 2026.",
+      "Lionel Messi jugará el Mundial 2026.",
+      "Lionel, Messi jugará el Mundial 2026."
+    ],
+    "answer": 2
+  },
+  {
+    "id": 9,
+    "partido": "semis",
+    "topico": "Signos de puntuación",
+    "text": "En una de las oraciones, los signos de puntuación están mal utilizados:",
+    "options": [
+      "Messi, Mbappé, Neymar y Cristiano Ronaldo, jugaron mundiales increíbles.",
+      "Aunque el partido estaba muy difícil, el equipo logró empatar en el último minuto.",
+      "¡Qué golazo acabas de meter, me podés decir cómo hiciste esa jugada?",
+      "Cuando el árbitro tocó el silbato final. Todos los jugadores corrieron a abrazar al arquero."
+    ],
+    "answer": 1
+  },
+  {
+    "id": 10,
+    "partido": "final",
+    "topico": "Sintaxis",
+    "text": "Solo una de las cuatro oraciones está bien escrita, ¿cuál es?",
+    "options": [
+      "El delantero estrella anotó el gol de la victoria en el último minuto del partido.",
+      "La entusiasmada hinchada de los países africanos celebraron el triunfo en las calles.",
+      "El director técnico planteó una estrategia para el segundo tiempo muy arriesgado.",
+      "Los jugadores compraron recuerdos para sus familias que regresaron al hotel cansados."
+    ],
+    "answer": 0
+  },
+  {
+    "id": 11,
+    "partido": "final",
+    "topico": "Sintaxis",
+    "text": "Tres de estas oraciones tienen errores de ortografía. Solo una es la correcta, ¿cuál es?",
+    "options": [
+      "Vamos a ber una película de terror al cine.",
+      "Bamos a ver una película de terror al cine.",
+      "Vamos haber una película de terror al cine.",
+      "Vamos a ver una película de terror al cine."
+    ],
+    "answer": 3
+  },
+  {
+    "id": 12,
+    "partido": "final",
+    "topico": "Sintaxis",
+    "text": "Lee las oraciones, prestá atención a la sintaxis y elegí la opción correcta:",
+    "options": [
+      "La tribuna llena de hinchas argentinos gritaban con todo cada vez que Messi tocaba la pelota.",
+      "El arquero suplente atajó el último penal del partido emocionada.",
+      "El jugador estrella logró anotar un gol en el último minuto y todos festejaron.",
+      "Los jugadores de la selección entrenó muy duro toda la semana para ganar el partido."
+    ],
+    "answer": 2
+  },
+  {
+    "id": 13,
+    "partido": "final",
+    "topico": "Sintaxis",
+    "text": "¿Cuál de todas las palabras está bien escrita?",
+    "options": ["seleción", "selexión", "seleccion", "selección"],
+    "answer": 3
+  },
+  {
+    "id": 14,
+    "partido": "final",
+    "topico": "Sintaxis",
+    "text": "Cuidado con las palabras homófonas (se escriben distinto, pero suenan igual, como “casa” y “caza”). Solo una está bien escrita.",
+    "options": [
+      "El jugador de fútbol pidió que su familia valla a la cancha.",
+      "Los jugadores pidieron que vayan sus familiares al palco principal.",
+      "El defensor tubo que salir de la cancha en camilla tras lesionarse la rodilla.",
+      "El 10 de Argentina tuvo una grave lesión."
+    ],
+    "answer": 3
+  }
+]

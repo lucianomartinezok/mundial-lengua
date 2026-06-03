@@ -9,58 +9,25 @@ const TEAMS = [
   { id: "portugal", code: "POR", name: "Portugal", flag: "🇵🇹" },
 ];
 
-const QUESTIONS = [
-  {
-    id: 1,
-    text: "¿Cuál es la opción correcta para esta prueba 1?",
-    options: ["A (Correcta)", "B", "C", "D"],
-    answer: 0,
-  },
-  {
-    id: 2,
-    text: "Selecciona la respuesta válida para la prueba 2.",
-    options: ["A", "B (Correcta)", "C", "D"],
-    answer: 1,
-  },
-  {
-    id: 3,
-    text: "¿Cuál de estas alternativas es la acertada en la prueba 3?",
-    options: ["A", "B", "C (Correcta)", "D"],
-    answer: 2,
-  },
-  {
-    id: 4,
-    text: "Marca la opción que corresponda para la prueba 4.",
-    options: ["A", "B", "C", "D (Correcta)"],
-    answer: 3,
-  },
-  {
-    id: 5,
-    text: "Pregunta genérica de testeo número 5.",
-    options: ["A (Correcta)", "B", "C", "D"],
-    answer: 0,
-  },
-  {
-    id: 6,
-    text: "Control de flujo de juego para la prueba 6.",
-    options: ["A", "B (Correcta)", "C", "D"],
-    answer: 1,
-  },
-];
+let QUESTIONS = [];
 
 const ROUNDS = [
-  { key: "octavos", label: "Octavos de Final" },
-  { key: "cuartos", label: "Cuartos de Final" },
-  { key: "semis", label: "Semifinal" },
-  { key: "final", label: "Final" },
+  { key: "octavos", label: "Octavos de Final", topic: "Ortografía" },
+  { key: "cuartos", label: "Cuartos de Final", topic: "Tildes" },
+  { key: "semis", label: "Semifinal", topic: "Signos de puntuación" },
+  { key: "final", label: "Final", topic: "Sintaxis" },
 ];
 
-const WINNING_GOALS = 2;
+const WIN_BY_ADVANTAGE = 2;
+const MAX_GOALS = 5;
 
 const app = document.querySelector("#app");
 const fxLayer = document.querySelector("#fx-layer");
 
 let state = freshState();
+let loadingTimer = null;
+let fireworksTimer = null;
+let championAudio = null;
 
 function freshState() {
   return {
@@ -69,10 +36,12 @@ function freshState() {
     usedUserOpponents: [],
     currentRoundIndex: 0,
     userScores: { user: 0, rival: 0 },
+    totalScores: { correct: 0, wrong: 0 },
     questionIndex: 0,
     screen: "select",
     currentQuestion: null,
     answering: false,
+    loading: null,
   };
 }
 
@@ -81,8 +50,8 @@ function shuffle(items) {
 }
 
 function randomScore(winnerFirst) {
-  const loser = Math.floor(Math.random() * WINNING_GOALS);
-  return winnerFirst ? [WINNING_GOALS, loser] : [loser, WINNING_GOALS];
+  const loser = Math.floor(Math.random() * WIN_BY_ADVANTAGE);
+  return winnerFirst ? [WIN_BY_ADVANTAGE, loser] : [loser, WIN_BY_ADVANTAGE];
 }
 
 function teamById(id) {
@@ -156,6 +125,8 @@ function currentRival() {
 function render() {
   app.classList.toggle("final-stage-page", state.currentRoundIndex === 3);
   document.body.classList.toggle("dark-loss", state.screen === "eliminated");
+  if (state.screen !== "loading") clearLoadingTimer();
+  if (state.screen !== "champion") stopFireworks();
 
   if (state.screen === "select") renderSelect();
   if (state.screen === "loading") renderLoading();
@@ -172,7 +143,6 @@ function renderSelect() {
       <div class="select-head">
         <h1 class="brand">Mundial de<br />Lengua y Literatura</h1>
         <p class="subtitle">ET 12</p>
-        <div class="flag-strip" aria-label="Banderas de países">${flagStrip()}</div>
         <h2 class="select-title">Elegí tu equipo</h2>
       </div>
       <div class="team-grid">
@@ -180,7 +150,7 @@ function renderSelect() {
           (team) => `
             <button class="team-card" type="button" data-team="${team.id}" aria-label="Representar a ${team.flag} ${team.name}">
               ${flagIcon(team, "large")}
-              <span class="team-name">${teamLabel(team)}</span>
+              <span class="team-name">${team.name}</span>
             </button>
           `,
         ).join("")}
@@ -198,29 +168,49 @@ function selectTeam(teamId) {
   state.bracket = createBracket(state.selectedTeam);
   state.usedUserOpponents = [currentRival().id];
   state.currentRoundIndex = 0;
-  state.screen = "loading";
-  render();
-}
-
-function renderLoading() {
-  app.innerHTML = `
-    <section class="screen loading-screen">
-      <div class="loading-ball" aria-hidden="true"></div>
-      <h2 class="loading-title">${teamLabel(state.selectedTeam)}</h2>
-      <p class="loading-copy">Preparando el cuadro del Mundial...</p>
-      <button class="primary-action" type="button" id="show-bracket-button">Ver llaves</button>
-    </section>
-  `;
-
-  document.querySelector("#show-bracket-button").addEventListener("click", () => {
-    state.screen = "bracket";
-    render();
+  showLoading({
+    target: "bracket",
+    delay: 3000,
+    title: teamLabel(state.selectedTeam),
+    copy: "Cargando",
   });
 }
 
+function renderLoading() {
+  const loading = state.loading || {
+    target: "bracket",
+    delay: 1200,
+    title: teamLabel(state.selectedTeam),
+    copy: "Cargando",
+    buttonText: "JUGAR",
+    ready: true,
+  };
+
+  app.innerHTML = `
+    <section class="screen loading-screen">
+      <div class="loading-ball" aria-hidden="true"></div>
+      <h2 class="loading-title">${loading.title}</h2>
+      <p class="loading-copy${loading.copy === "Cargando" ? " is-loading" : ""}">${loading.copy}</p>
+      <button class="bracket-play loading-play" type="button" id="loading-play-button" ${loading.ready ? "" : "disabled"}>
+        ${loading.buttonText || "JUGAR"}
+      </button>
+    </section>
+  `;
+
+  if (!loading.ready) {
+    scheduleLoadingReady(loading.delay);
+  }
+
+  document.querySelector("#loading-play-button").addEventListener("click", finishLoading);
+}
+
 function goToBracket() {
-  state.screen = "bracket";
-  render();
+  showLoading({
+    target: "bracket",
+    delay: 1200,
+    title: "Ganaste el partido",
+    copy: "Cargando",
+  });
 }
 
 function renderGameFrame(content, options = {}) {
@@ -251,13 +241,12 @@ function renderGameFrame(content, options = {}) {
 function renderBracketScreen() {
   app.innerHTML = `
     <section class="screen bracket-screen">
-      <div class="bracket-stage-label">${ROUNDS[state.currentRoundIndex].label}</div>
       ${renderBracket()}
     </section>
   `;
 
   const playButton = document.querySelector("#bracket-play-button");
-  if (playButton) playButton.addEventListener("click", startMatch);
+  if (playButton) playButton.addEventListener("click", beginMatchLoading);
 }
 
 function renderBracket() {
@@ -267,6 +256,7 @@ function renderBracket() {
         (round, index) => `
           <div class="bracket-column round-${index}">
             <p class="round-title">${round.label.replace(" de ", "<br />de ")}</p>
+            <p class="round-topic">Temática: ${round.topic}</p>
             <div class="match-list matches-${index}">
               ${state.bracket[index].map(renderMatch).join("")}
             </div>
@@ -320,9 +310,10 @@ function renderSlot(teamId, score, locked = false) {
 
 function renderTransition() {
   const rival = currentRival();
-  const title = ROUNDS[state.currentRoundIndex].label;
+  const round = ROUNDS[state.currentRoundIndex];
   renderGameFrame(`
-    <div class="stage-kicker">${title}</div>
+    <div class="stage-topic">Temática: ${round.topic}</div>
+    <div class="stage-kicker">${round.label}</div>
     <div class="versus">
       <div class="versus-team">
         ${flagIcon(state.selectedTeam, "hero")}
@@ -337,7 +328,63 @@ function renderTransition() {
     <button class="primary-action" type="button" id="play-button">¡A jugar!</button>
   `);
 
-  document.querySelector("#play-button").addEventListener("click", startMatch);
+  document.querySelector("#play-button").addEventListener("click", beginMatchLoading);
+}
+
+function showLoading({ target, delay, title, copy, buttonText = "JUGAR" }) {
+  clearLoadingTimer();
+  state.loading = {
+    target,
+    delay,
+    title,
+    copy,
+    buttonText,
+    ready: false,
+  };
+  state.screen = "loading";
+  render();
+}
+
+function scheduleLoadingReady(delay) {
+  clearLoadingTimer();
+  loadingTimer = window.setTimeout(() => {
+    if (state.screen !== "loading" || !state.loading) return;
+    state.loading.ready = true;
+    render();
+  }, delay);
+}
+
+function clearLoadingTimer() {
+  if (!loadingTimer) return;
+  window.clearTimeout(loadingTimer);
+  loadingTimer = null;
+}
+
+function finishLoading() {
+  if (!state.loading?.ready) return;
+
+  const target = state.loading.target;
+  state.loading = null;
+
+  if (target === "match") {
+    playStartSound();
+    startMatch();
+    return;
+  }
+
+  state.screen = target;
+  render();
+}
+
+function beginMatchLoading() {
+  const rival = currentRival();
+  const round = ROUNDS[state.currentRoundIndex];
+  showLoading({
+    target: "match",
+    delay: 900,
+    title: `${teamLabel(state.selectedTeam)} vs. ${teamLabel(rival)}`,
+    copy: `Temática: ${round.topic}`,
+  });
 }
 
 function startMatch() {
@@ -349,7 +396,10 @@ function startMatch() {
 }
 
 function nextQuestion() {
-  const question = QUESTIONS[state.questionIndex % QUESTIONS.length];
+  const roundKey = ROUNDS[state.currentRoundIndex].key;
+  const roundQuestions = QUESTIONS.filter((question) => question.partido === roundKey);
+  const availableQuestions = roundQuestions.length ? roundQuestions : QUESTIONS;
+  const question = availableQuestions[state.questionIndex % availableQuestions.length];
   state.questionIndex += 1;
   return question;
 }
@@ -357,20 +407,22 @@ function nextQuestion() {
 function renderQuestion() {
   const rival = currentRival();
   const question = state.currentQuestion;
+  const round = ROUNDS[state.currentRoundIndex];
   renderGameFrame(`
     <div class="match-head">
       <div>
-        <div class="stage-kicker">${ROUNDS[state.currentRoundIndex].label}</div>
+        <div class="stage-topic">Temática: ${round.topic}</div>
+        <div class="stage-kicker">${round.label}</div>
         <h2 class="panel-title">${teamLabel(state.selectedTeam)} vs. ${teamLabel(rival)}</h2>
       </div>
       <div class="scoreboard" aria-label="Marcador del partido">
-        <div class="score-team">${flagIcon(state.selectedTeam, "score")}<strong>${teamLabel(state.selectedTeam)}</strong></div>
+        <div class="score-team">${flagIcon(state.selectedTeam, "score")}<strong>${state.selectedTeam.name}</strong></div>
         <div class="score-number">${state.userScores.user} - ${state.userScores.rival}</div>
-        <div class="score-team">${flagIcon(rival, "score")}<strong>${teamLabel(rival)}</strong></div>
+        <div class="score-team">${flagIcon(rival, "score")}<strong>${rival.name}</strong></div>
       </div>
     </div>
     <div class="question-box">
-      <div class="question-count">Tanda de preguntas · ${((state.questionIndex - 1) % 2) + 1} de 2</div>
+      <div class="question-count">${question.topico}</div>
       <p class="question-text">${question.text}</p>
       <div class="answer-grid">
         ${question.options.map(
@@ -382,6 +434,7 @@ function renderQuestion() {
           `,
         ).join("")}
       </div>
+      <p class="question-rule">Cada acierto es un gol, cada error es un gol en contra.</p>
     </div>
   `);
 
@@ -398,9 +451,11 @@ function answerQuestion(answerIndex) {
 
   if (isCorrect) {
     state.userScores.user += 1;
+    state.totalScores.correct += 1;
     showGoal();
   } else {
     state.userScores.rival += 1;
+    state.totalScores.wrong += 1;
     showMiss();
   }
 
@@ -408,12 +463,12 @@ function answerQuestion(answerIndex) {
 
   window.setTimeout(() => {
     state.answering = false;
-    if (state.userScores.user >= WINNING_GOALS) {
-      winCurrentMatch();
+    if (state.userScores.rival >= MAX_GOALS) {
+      loseTournament();
       return;
     }
-    if (state.userScores.rival >= WINNING_GOALS) {
-      loseTournament();
+    if (playerWonMatch()) {
+      winCurrentMatch();
       return;
     }
     state.currentQuestion = nextQuestion();
@@ -438,12 +493,18 @@ function winCurrentMatch() {
   if (state.currentRoundIndex === 3) {
     state.screen = "champion";
     render();
+    playChampionSound();
     fireworks(90);
     return;
   }
 
   state.currentRoundIndex += 1;
   goToBracket();
+}
+
+function playerWonMatch() {
+  const advantage = state.userScores.user - state.userScores.rival;
+  return advantage >= WIN_BY_ADVANTAGE || state.userScores.user >= MAX_GOALS;
 }
 
 function loseTournament() {
@@ -469,7 +530,7 @@ function renderEliminated() {
       <div class="abandoned-ball" aria-hidden="true"></div>
       <div class="result-panel">
         <h2 class="result-title">${flagIcon(state.selectedTeam, "title")} Eliminado</h2>
-        <p class="result-copy">${teamLabel(rival)} llegó a ${WINNING_GOALS} tantos. El torneo se reinicia desde Octavos de Final.</p>
+        <p class="result-copy">${teamLabel(rival)} llegó a ${MAX_GOALS} tantos. El torneo se reinicia desde Octavos de Final.</p>
         <button class="primary-action" type="button" id="restart-button">Volver a jugar</button>
       </div>
     </section>
@@ -479,13 +540,19 @@ function renderEliminated() {
 }
 
 function renderChampion() {
+  const championName = state.selectedTeam.name.toUpperCase();
   app.innerHTML = `
     <section class="screen champion-lock">
       <div class="champion-content">
         <div class="trophy">🏆</div>
-        <h1 class="result-title">${flagIcon(state.selectedTeam, "title")} ¡Campeón Mundial! ${flagIcon(state.selectedTeam, "title")}</h1>
-        <p class="result-copy">${teamLabel(state.selectedTeam)} conquistó la gran final. <span class="flag-strip compact">${flagStrip()}</span></p>
-        <button class="ghost-action" type="button" id="restart-button">Jugar de nuevo</button>
+        <div class="champion-flag">${flagIcon(state.selectedTeam, "champion")}</div>
+        <h1 class="result-title">¡Campeón Mundial!</h1>
+        <div class="champion-summary" aria-label="Resumen del torneo">
+          <p>Preguntas acertadas: <strong>${state.totalScores.correct}</strong></p>
+          <p>Preguntas erradas: <strong>${state.totalScores.wrong}</strong></p>
+        </div>
+        <p class="result-copy">${championName} CONQUISTÓ LA GRAN FINAL. FELICITACIONES.</p>
+        <button class="primary-action champion-restart" type="button" id="restart-button">Jugar de nuevo</button>
       </div>
     </section>
   `;
@@ -494,6 +561,9 @@ function renderChampion() {
 }
 
 function resetGame() {
+  clearLoadingTimer();
+  stopFireworks();
+  stopChampionSound();
   state = freshState();
   render();
 }
@@ -509,8 +579,7 @@ function showOverlay(text, className = "") {
 function showGoal() {
   showOverlay("¡GOL!");
   confetti(80);
-  playTone(620, 0.16, "sine");
-  window.setTimeout(() => playTone(820, 0.14, "sine"), 90);
+  playGoalSound();
 }
 
 function showMiss() {
@@ -518,6 +587,46 @@ function showMiss() {
   document.body.classList.add("shake");
   playTone(120, 0.28, "sawtooth");
   window.setTimeout(() => document.body.classList.remove("shake"), 430);
+}
+
+function playStartSound() {
+  const audio = new Audio("sounds/inicio.mp3");
+  audio.volume = 0.9;
+  audio.play().catch(() => {
+    playStartTone();
+  });
+}
+
+function playStartTone() {
+  playTone(420, 0.12, "triangle");
+  window.setTimeout(() => playTone(560, 0.12, "triangle"), 90);
+  window.setTimeout(() => playTone(760, 0.18, "sine"), 180);
+}
+
+function playChampionSound() {
+  stopChampionSound();
+  championAudio = new Audio("sounds/CAMPEON.mp3");
+  championAudio.volume = 0.9;
+  championAudio.play().catch(() => {
+    playTone(660, 0.16, "triangle");
+    window.setTimeout(() => playTone(880, 0.22, "sine"), 130);
+  });
+}
+
+function stopChampionSound() {
+  if (!championAudio) return;
+  championAudio.pause();
+  championAudio.currentTime = 0;
+  championAudio = null;
+}
+
+function playGoalSound() {
+  const audio = new Audio("sounds/goalsound_.mp3");
+  audio.volume = 0.9;
+  audio.play().catch(() => {
+    playTone(620, 0.16, "sine");
+    window.setTimeout(() => playTone(820, 0.14, "sine"), 90);
+  });
 }
 
 function confetti(amount) {
@@ -535,6 +644,8 @@ function confetti(amount) {
 }
 
 function fireworks(amount) {
+  clearFireworksTimer();
+
   for (let i = 0; i < amount; i += 1) {
     const spark = document.createElement("span");
     spark.className = "spark";
@@ -546,7 +657,18 @@ function fireworks(amount) {
     fxLayer.appendChild(spark);
     window.setTimeout(() => spark.remove(), 1600);
   }
-  window.setTimeout(() => fireworks(36), 1300);
+  fireworksTimer = window.setTimeout(() => fireworks(36), 1300);
+}
+
+function clearFireworksTimer() {
+  if (!fireworksTimer) return;
+  window.clearTimeout(fireworksTimer);
+  fireworksTimer = null;
+}
+
+function stopFireworks() {
+  clearFireworksTimer();
+  fxLayer.querySelectorAll(".spark").forEach((spark) => spark.remove());
 }
 
 function playTone(frequency, duration, type) {
@@ -567,4 +689,22 @@ function playTone(frequency, duration, type) {
   oscillator.stop(context.currentTime + duration);
 }
 
-render();
+async function loadQuestions() {
+  try {
+    const response = await fetch("questions.json");
+    if (!response.ok) throw new Error("No se pudo cargar questions.json");
+    QUESTIONS = await response.json();
+    render();
+  } catch (error) {
+    app.innerHTML = `
+      <section class="screen single-layout">
+        <section class="panel stage-panel">
+          <h1 class="panel-title">No se pudieron cargar las preguntas</h1>
+          <p class="result-copy">Abrí el juego desde un servidor local para que el archivo questions.json pueda leerse correctamente.</p>
+        </section>
+      </section>
+    `;
+  }
+}
+
+loadQuestions();
